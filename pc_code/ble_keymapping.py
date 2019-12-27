@@ -9,14 +9,19 @@ class ScanDelegate(DefaultDelegate):
         elif isNewData:
             print ("Received new data from", dev.addr)
 scanner = Scanner().withDelegate(ScanDelegate())
-devices = scanner.scan(10.0)
+devices = list(scanner.scan(10.0))
 n=0
 for dev in devices:
+    if dev.getValueText(9) is None:
+        n += 1
+        continue
     print ("%d: Device %s (%s), RSSI=%d dB" % (n, dev.addr, dev.addrType, dev.rssi))
+    print ("Complete Local Name: %s"%(dev.getValueText(9)))
+    
     n += 1
-    for (adtype, desc, value) in dev.getScanData():
-        print (" %s = %s" % (desc, value))
-number = input('Enter your device number: ')
+    #for (adtype, desc, value) in dev.getScanData():
+    #    print (" %s = %s" % (adtype, desc, value))
+number = int(input('Enter your device number: '))
 print('Device', number)
 print(devices[number].addr)
 print ("Connecting...")
