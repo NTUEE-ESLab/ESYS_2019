@@ -1,10 +1,11 @@
 #include "mbed.h"
 #include "ADXL345_I2C.h"
-#include "ADXL345.h"
+#include "BSP.h"
 I2C i2c(I2C_SDA , I2C_SCL);
 // SPI device(SPI_MOSI, SPI_MISO, SPI_SCK);
 // DigitalOut chip_select(SPI_CS);
-
+#define TIMESTEP            0.05
+#define SCALE_MULTIPLIER    0.045
 const int addr7bit = 0x53;      // 7-bit I2C address
 const int addr8bit = 0x53 << 1; // 8-bit I2C address, 0x90
 ADXL345_I2C accelerometer_high(I2C_SDA, I2C_SCL, 0x1D);
@@ -26,6 +27,11 @@ int offsets_low[3] = {0, 0, 0};
 
 uint8_t rawReadings[6];
 
+int16_t pDataXYZ[3] = {0};
+float pGyroDataXYZ[3] = {0};
+int   AccOffset[3] = {};
+float GyroOffset[3] = {};
+
 void calibration()
 {
     int _sample_num = 0;
@@ -35,10 +41,14 @@ void calibration()
         _sample_num++;
         accelerometer_high.getOutput(readings_high);
         accelerometer_low.getOutput(readings_low);
+        BSP_GYRO_GetXYZ(pGyroDataXYZ);
+        BSP_ACCELERO_AccGetXYZ(pDataXYZ);
 
         for (int i = 0; i < 3; ++i) {
             offsets_high[i] += readings_high[i];
             offsets_low[i] += readings_low[i];
+            GyroOffset[i] += pGyroDataXYZ[i];
+            AccOffset[i] += pDataXYZ[i];
         }
         wait(0.0005);
     }
@@ -46,6 +56,8 @@ void calibration()
     for (int i = 0; i < 3; ++i) {
         offsets_high[i] /= _sample_num;
         offsets_low[i] /= _sample_num;
+        GyroOffset[i] /= _sample_num;
+        AccOffset[i] /= _sample_num;
     }
 
     printf("Done calibration\n");
@@ -82,7 +94,8 @@ int main() {
     // ack = i2c.read(0xA7, &output, 1);
     // printf("ACK = %d\n", ack);
     // printf("Device id = %d\n", output);
-    
+    BSP_GYRO_Init();
+    BSP_ACCELERO_Init();
      
     printf("Starting ADXL345 test...\n");
     wait_us(10000);
@@ -115,18 +128,18 @@ int main() {
     accelerometer_low.setPowerControl(MeasurementMode); 
     calibration();   
  
-    while (1) {
-        // printf("%i, %i, %i\n", (int16_t)(readings[0]-offsets[0]), (int16_t)(readings[1]-offsets[1]), (int16_t)(readings[2]-offsets[2]));
-     
-        wait_us(100000);
+    while (1) {     
+        wait_us(10000);
          
         accelerometer_high.getOutput(readings_high);
         accelerometer_low.getOutput(readings_low);
-        // accelerometer.getRawOutput(rawReadings);
+        BSP_ACCELERO_AccGetXYZ(pDataXYZ);
+        BSP_GYRO_GetXYZ(pGyroDataXYZ);
          
-        printf("HIGH %i, %i, %i        LOW %i, %i, %i\n", (int16_t)(readings_high[0]-offsets_high[0]), (int16_t)(readings_high[1]-offsets_high[1]), (int16_t)(readings_high[2]-offsets_high[2]),
-        (int16_t)(readings_low[0]-offsets_low[0]), (int16_t)(readings_low[1]-offsets_low[1]), (int16_t)(readings_low[2]-offsets_low[2]));
-        // printf("LOW %i, %i, %i\n", (int16_t)(readings_low[0]-offsets_low[0]), (int16_t)(readings_low[1]-offsets_low[1]), (int16_t)(readings_low[2]-offsets_low[2]));
+        printf("HIGH %i, %i, %i   LOW %i, %i, %i   ACC %d, %d, %d  Gyro %.2f, %.2f, %.2f \n", (int16_t)(readings_high[0]-offsets_high[0]), (int16_t)(readings_high[1]-offsets_high[1]), (int16_t)(readings_high[2]-offsets_high[2]),
+        (int16_t)(readings_low[0]-offsets_low[0]), (int16_t)(readings_low[1]-offsets_low[1]), (int16_t)(readings_low[2]-offsets_low[2]), 
+        pDataXYZ[0]-AccOffset[0], pDataXYZ[1]-AccOffset[1], pDataXYZ[2]-AccOffset[2], 
+        (pGyroDataXYZ[0] - GyroOffset[0]) * SCALE_MULTIPLIER, (pGyroDataXYZ[1] - GyroOffset[1]) * SCALE_MULTIPLIER, (pGyroDataXYZ[2] - GyroOffset[2]) * SCALE_MULTIPLIER);
      }
 
 
