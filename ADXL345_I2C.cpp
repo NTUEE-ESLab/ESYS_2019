@@ -53,7 +53,10 @@
 
 //#include "mbed.h"
 
-ADXL345_I2C::ADXL345_I2C(PinName sda, PinName scl) : i2c_(sda, scl) {
+ADXL345_I2C::ADXL345_I2C(PinName sda, PinName scl, char addr) : i2c_(sda, scl) {
+    adxladdress = addr;
+    adxlwrite = addr << 1;
+    adxlread = (addr << 1) | 0x01;
 
     //400kHz, allowing us to use the fastest data rates.
     i2c_.frequency(400000);   
@@ -61,7 +64,7 @@ ADXL345_I2C::ADXL345_I2C(PinName sda, PinName scl) : i2c_(sda, scl) {
     char tx[2];
     tx[0] = ADXL345_BW_RATE_REG;
     tx[1] = ADXL345_1600HZ; //value greater than or equal to 0x0A is written into the rate bits (Bit D3 through Bit D0) in the BW_RATE register 
- i2c_.write( ADXL345_I2C_WRITE , tx, 2);  
+ i2c_.write( adxlwrite , tx, 2);  
 
 //Data format (for +-16g) - This is done by setting Bit D3 of the DATA_FORMAT register (Address 0x31) and writing a value of 0x03 to the range bits (Bit D1 and Bit D0) of the DATA_FORMAT register (Address 0x31).
    
@@ -69,29 +72,29 @@ ADXL345_I2C::ADXL345_I2C(PinName sda, PinName scl) : i2c_(sda, scl) {
     rx[0] = ADXL345_DATA_FORMAT_REG;
     rx[1] = 0x0B; 
      // full res and +_16g
- i2c_.write( ADXL345_I2C_WRITE , rx, 2); 
+ i2c_.write( adxlwrite , rx, 2); 
  
  // Set Offset  - programmed into the OFSX, OFSY, and OFXZ registers, respectively, as 0xFD, 0x03 and 0xFE.
   char x[2];
     x[0] = ADXL345_OFSX_REG ;
     x[1] = 0xFD; 
- i2c_.write( ADXL345_I2C_WRITE , x, 2);
+ i2c_.write( adxlwrite , x, 2);
   char y[2];
     y[0] = ADXL345_OFSY_REG ;
     y[1] = 0x03; 
- i2c_.write( ADXL345_I2C_WRITE , y, 2);
+ i2c_.write( adxlwrite , y, 2);
  char z[2];
     z[0] = ADXL345_OFSZ_REG ;
     z[1] = 0xFE; 
- i2c_.write( ADXL345_I2C_WRITE , z, 2);
+ i2c_.write( adxlwrite , z, 2);
 }
 
 
 char ADXL345_I2C::SingleByteRead(char address){   
    char tx = address;
    char output; 
-    i2c_.write( ADXL345_I2C_WRITE , &tx, 1);  //tell it what you want to read
-    i2c_.read( ADXL345_I2C_READ , &output, 1);    //tell it where to store the data
+    i2c_.write( adxlwrite , &tx, 1);  //tell it what you want to read
+    i2c_.read( adxlread, &output, 1);    //tell it where to store the data
     return output;
   
 }
@@ -111,22 +114,22 @@ int ADXL345_I2C::SingleByteWrite(char address, char data){
    char tx[2];
    tx[0] = address;
    tx[1] = data;
-   return   ack | i2c_.write( ADXL345_I2C_WRITE , tx, 2);   
+   return   ack | i2c_.write( adxlwrite, tx, 2);   
 }
 
 
 
 void ADXL345_I2C::multiByteRead(char address, char* output, int size) {
-    i2c_.write( ADXL345_I2C_WRITE, &address, 1);  //tell it where to read from
-    i2c_.read( ADXL345_I2C_READ , output, size);      //tell it where to store the data read
+    i2c_.write( adxlwrite, &address, 1);  //tell it where to read from
+    i2c_.read( adxlread , output, size);      //tell it where to store the data read
 }
 
 
 int ADXL345_I2C::multiByteWrite(char address, char* ptr_data, int size) {
         int ack;
    
-               ack = i2c_.write( ADXL345_I2C_WRITE, &address, 1);  //tell it where to write to
-        return ack | i2c_.write( ADXL345_I2C_READ, ptr_data, size);  //tell it what data to write
+               ack = i2c_.write( adxlwrite, &address, 1);  //tell it where to write to
+        return ack | i2c_.write( adxlread, ptr_data, size);  //tell it what data to write
                                     
 }
 

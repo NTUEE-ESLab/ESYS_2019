@@ -138,7 +138,7 @@ public:
      * @param mosi mbed pin to use for SDA line of I2C interface.
      * @param sck mbed pin to use for SCL line of I2C interface.
      */
-    ADXL345_I2C(PinName sda, PinName scl);
+    ADXL345_I2C(PinName sda, PinName scl, char addr);
 
     /**
      * Get the output of all three axes.
@@ -537,6 +537,9 @@ int setPowerMode(char mode);
 private:
 
     I2C i2c_;
+    char adxladdress;
+    char adxlwrite;
+    char adxlread;
     
 
     /**

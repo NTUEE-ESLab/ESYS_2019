@@ -7,7 +7,8 @@ I2C i2c(I2C_SDA , I2C_SCL);
 
 const int addr7bit = 0x53;      // 7-bit I2C address
 const int addr8bit = 0x53 << 1; // 8-bit I2C address, 0x90
-ADXL345_I2C accelerometer(I2C_SDA, I2C_SCL);
+ADXL345_I2C accelerometer_high(I2C_SDA, I2C_SCL, 0x1D);
+ADXL345_I2C accelerometer_low(I2C_SDA, I2C_SCL, 0x53);
 
 /*
     SPI_MOSI    = D11,
@@ -17,29 +18,34 @@ ADXL345_I2C accelerometer(I2C_SDA, I2C_SCL);
 */
 // ADXL345 accelerometer(D11, D12, D13, D10);
 
-int readings[3] = {0, 0, 0};
-int offsets[3] = {0, 0, 0};
+int readings_high[3] = {0, 0, 0};
+int readings_low[3] = {0, 0, 0};
+
+int offsets_high[3] = {0, 0, 0};
+int offsets_low[3] = {0, 0, 0};
+
 uint8_t rawReadings[6];
 
 void calibration()
 {
     int _sample_num = 0;
-    for (int i = 0; i < 3; i++){
-        offsets[i] = 0;
-    }
     printf("calibrate...\n");
 
     while (_sample_num < 200) {
         _sample_num++;
-        accelerometer.getOutput(readings);
+        accelerometer_high.getOutput(readings_high);
+        accelerometer_low.getOutput(readings_low);
+
         for (int i = 0; i < 3; ++i) {
-            offsets[i] += readings[i];
+            offsets_high[i] += readings_high[i];
+            offsets_low[i] += readings_low[i];
         }
         wait(0.0005);
     }
 
     for (int i = 0; i < 3; ++i) {
-        offsets[i] /= _sample_num;
+        offsets_high[i] /= _sample_num;
+        offsets_low[i] /= _sample_num;
     }
 
     printf("Done calibration\n");
@@ -80,26 +86,33 @@ int main() {
      
     printf("Starting ADXL345 test...\n");
     wait_us(10000);
-    printf("Device ID is: 0x%02x\n", accelerometer.getDeviceID());
+    printf("Device ID(HIGH) is: 0x%02x\n", accelerometer_high.getDeviceID());
+    printf("Device ID(LOW) is: 0x%02x\n", accelerometer_low.getDeviceID());
+
     // printf("Device ID is: 0x%02x\n", accelerometer.getDevId());
     wait_us(10000);
     
     // These are here to test whether any of the initialization fails. It will print the failure
-    accelerometer.setPowerControl(0x00);
+    accelerometer_high.setPowerControl(0x00);
+    accelerometer_low.setPowerControl(0x00);
+
     //Full resolution, +/-16g, 4mg/LSB.
     wait_us(10000);
      
-    accelerometer.setDataFormatControl(0x0B);
+    accelerometer_high.setDataFormatControl(0x0B);
+    accelerometer_low.setDataFormatControl(0x0B);
     // pc.printf("didn't set data format\n");
     wait_us(10000);    
      
     //3.2kHz data rate.
-    accelerometer.setDataRate(ADXL345_3200HZ);
+    accelerometer_high.setDataRate(ADXL345_3200HZ);
+    accelerometer_low.setDataRate(ADXL345_3200HZ);
     wait_us(10000);
      
     //Measurement mode.
      
-    accelerometer.setPowerControl(MeasurementMode); 
+    accelerometer_high.setPowerControl(MeasurementMode); 
+    accelerometer_low.setPowerControl(MeasurementMode); 
     calibration();   
  
     while (1) {
@@ -107,10 +120,13 @@ int main() {
      
         wait_us(100000);
          
-        accelerometer.getOutput(readings);
+        accelerometer_high.getOutput(readings_high);
+        accelerometer_low.getOutput(readings_low);
         // accelerometer.getRawOutput(rawReadings);
          
-        printf("%i, %i, %i\n", (int16_t)(readings[0]-offsets[0]), (int16_t)(readings[1]-offsets[1]), (int16_t)(readings[2]-offsets[2]));
+        printf("HIGH %i, %i, %i        LOW %i, %i, %i\n", (int16_t)(readings_high[0]-offsets_high[0]), (int16_t)(readings_high[1]-offsets_high[1]), (int16_t)(readings_high[2]-offsets_high[2]),
+        (int16_t)(readings_low[0]-offsets_low[0]), (int16_t)(readings_low[1]-offsets_low[1]), (int16_t)(readings_low[2]-offsets_low[2]));
+        // printf("LOW %i, %i, %i\n", (int16_t)(readings_low[0]-offsets_low[0]), (int16_t)(readings_low[1]-offsets_low[1]), (int16_t)(readings_low[2]-offsets_low[2]));
      }
 
 
