@@ -29,66 +29,66 @@ Serial pc(USBTX, USBRX);
 
 
 // main() runs in its own thread in the OS
-int main()
-{
-  pc.baud(9600);
-  HAL_Init();
+// int main()
+// {
+//   pc.baud(9600);
+//   HAL_Init();
 
-  /* Configure the System clock to have a frequency of 80 MHz */
-  // SystemClock_Config();
+//   /* Configure the System clock to have a frequency of 80 MHz */
+//   // SystemClock_Config();
   
-  /* Configure the User Button in GPIO Mode */
-  BSP_PB_Init(BUTTON_USER, BUTTON_MODE_GPIO);
+//   /* Configure the User Button in GPIO Mode */
+//   BSP_PB_Init(BUTTON_USER, BUTTON_MODE_GPIO);
   
-  /* Initialize all configured peripherals */
-  hDiscoUart.Instance = DISCOVERY_COM1; 
-  hDiscoUart.Init.BaudRate = 9600;
-  hDiscoUart.Init.WordLength = UART_WORDLENGTH_8B;
-  hDiscoUart.Init.StopBits = UART_STOPBITS_1;
-  hDiscoUart.Init.Parity = UART_PARITY_NONE;
-  hDiscoUart.Init.Mode = UART_MODE_TX_RX;
-  hDiscoUart.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  hDiscoUart.Init.OverSampling = UART_OVERSAMPLING_16;
-  hDiscoUart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  hDiscoUart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+//   /* Initialize all configured peripherals */
+//   hDiscoUart.Instance = DISCOVERY_COM1; 
+//   hDiscoUart.Init.BaudRate = 9600;
+//   hDiscoUart.Init.WordLength = UART_WORDLENGTH_8B;
+//   hDiscoUart.Init.StopBits = UART_STOPBITS_1;
+//   hDiscoUart.Init.Parity = UART_PARITY_NONE;
+//   hDiscoUart.Init.Mode = UART_MODE_TX_RX;
+//   hDiscoUart.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+//   hDiscoUart.Init.OverSampling = UART_OVERSAMPLING_16;
+//   hDiscoUart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+//   hDiscoUart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 
-  BSP_COM_Init(COM1, &hDiscoUart);
+//   BSP_COM_Init(COM1, &hDiscoUart);
 
-  BSP_ACCELERO_Init();    
-  BSP_GYRO_Init();
-  calibrate();
+//   BSP_ACCELERO_Init();    
+//   BSP_GYRO_Init();
+//   calibrate();
 
-  Gyro_Test();
-  // Accelero_Test();
+//   Gyro_Test();
+//   // Accelero_Test();
 
-}
+// }
 
-void Accelero_Test(void)
-{
-  uint32_t ret = 0;
-  pc.printf("\n***************************************************************\n");
-  pc.printf("\n******************* Accelerometer Test ************************\n");
-  pc.printf("\n***************************************************************\n\n");
-  BSP_ACCELERO_Init();
-  pc.printf("\n*** Type n or N to get a first accelero data ***\n\n");
-  pc.printf("\n*** Type q or Q to quit accelerometer Test ***\n\n");
-  while(1)
-  {
-    pc.printf("\n*** This is a new data ***\n\n");
-    BSP_ACCELERO_AccGetXYZ(pDataXYZ);
-    for (int i = 0; i < 3; ++i) {
-      pDataXYZ[i] = pDataXYZ[i] - AccOffset[i];
-    }
-    pc.printf("ACCELERO_X = %d \n", pDataXYZ[0]);
-    pc.printf("ACCELERO_Y = %d \n", pDataXYZ[1]);
-    pc.printf("ACCELERO_Z = %d \n", pDataXYZ[2]);
-    wait(TIMESTEP);
+// void Accelero_Test(void)
+// {
+//   uint32_t ret = 0;
+//   pc.printf("\n***************************************************************\n");
+//   pc.printf("\n******************* Accelerometer Test ************************\n");
+//   pc.printf("\n***************************************************************\n\n");
+//   BSP_ACCELERO_Init();
+//   pc.printf("\n*** Type n or N to get a first accelero data ***\n\n");
+//   pc.printf("\n*** Type q or Q to quit accelerometer Test ***\n\n");
+//   while(1)
+//   {
+//     pc.printf("\n*** This is a new data ***\n\n");
+//     BSP_ACCELERO_AccGetXYZ(pDataXYZ);
+//     for (int i = 0; i < 3; ++i) {
+//       pDataXYZ[i] = pDataXYZ[i] - AccOffset[i];
+//     }
+//     pc.printf("ACCELERO_X = %d \n", pDataXYZ[0]);
+//     pc.printf("ACCELERO_Y = %d \n", pDataXYZ[1]);
+//     pc.printf("ACCELERO_Z = %d \n", pDataXYZ[2]);
+//     wait(TIMESTEP);
 
-    //   BSP_ACCELERO_DeInit();
-    //   pc.printf("\n*** End of Accelerometer Test ***\n\n");
-    //   return;  
-  }    
-}
+//     //   BSP_ACCELERO_DeInit();
+//     //   pc.printf("\n*** End of Accelerometer Test ***\n\n");
+//     //   return;  
+//   }    
+// }
 
 void Gyro_Test(void)
 {

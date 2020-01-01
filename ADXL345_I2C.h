@@ -104,14 +104,14 @@
 #define ADXL345_6HZ25       0x06
 
 // read or write bytes
-#define ADXL345_I2C_READ    0xA7  
-#define ADXL345_I2C_WRITE   0xA6 
-#define ADXL345_I2C_ADDRESS 0x53   //the ADXL345 7-bit address is 0x53 when ALT ADDRESS is low as it is on the sparkfun chip: when ALT ADDRESS is high the address is 0x1D
+// #define ADXL345_I2C_READ    0xA7  
+// #define ADXL345_I2C_WRITE   0xA6 
+// #define ADXL345_I2C_ADDRESS 0x53   //the ADXL345 7-bit address is 0x53 when ALT ADDRESS is low as it is on the sparkfun chip: when ALT ADDRESS is high the address is 0x1D
 
 /////////////when ALT ADDRESS pin is high:
-//#define ADXL345_I2C_READ    0x3B   
-//#define ADXL345_I2C_WRITE   0x3A
-//#define ADXL345_I2C_ADDRESS 0x1D 
+#define ADXL345_I2C_READ    0x3B   
+#define ADXL345_I2C_WRITE   0x3A
+#define ADXL345_I2C_ADDRESS 0x1D 
 
 #define ADXL345_X           0x00
 #define ADXL345_Y           0x01
@@ -147,6 +147,11 @@ public:
      *        x-axis, y-axis and z-axis [in that order].
      */
     void getOutput(int* readings);
+
+    /*
+        Get raw output of all three axes
+    */
+    void getRawOutput(uint8_t* readings);
 
     /**
      * Read the device ID register on the device.

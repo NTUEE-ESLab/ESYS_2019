@@ -141,6 +141,14 @@ void ADXL345_I2C::getOutput(int* readings){
 
 }
 
+void ADXL345_I2C::getRawOutput(uint8_t* readings){
+    char buffer[6];
+    multiByteRead(ADXL345_DATAX0_REG, buffer, 6);
+    for (int i = 0; i < 6; i++){
+        readings[i] = (uint8_t)buffer[i];
+    }
+}
+
 
 
 char ADXL345_I2C::getDeviceID() {  

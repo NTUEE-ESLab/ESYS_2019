@@ -4,3 +4,5 @@ projectfiles
 mbed-os
 BUILD
 
+BSP_B-L475E-IOT01
+BLE_API
