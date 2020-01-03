@@ -19,15 +19,6 @@ ADXL345_I2C accelerometer_high(I2C_SDA, I2C_SCL, 0x1D);
 ADXL345_I2C accelerometer_low(I2C_SDA, I2C_SCL, 0x53);
 
 Serial pc(USBTX, USBRX);
-
-/*
-    SPI_MOSI    = D11,
-    SPI_MISO    = D12,
-    SPI_SCK     = D13,
-    SPI_CS      = D10,
-*/
-// ADXL345 accelerometer(D11, D12, D13, D10);
-
 // int readings_high[3] = {0, 0, 0};
 // int readings_low[3] = {0, 0, 0};
 
@@ -78,7 +69,6 @@ static events::EventQueue event_queue(/* event count */ 16 * EVENTS_EVENT_SIZE);
 
 class Sensors {
 #define SCALE_MULTIPLIER    0.045
-#define TIMESTEP            0.0005
 public:
     Sensors(events::EventQueue &event_queue) : 
     _event_queue(event_queue),
@@ -116,32 +106,14 @@ public:
         BSP_ACCELERO_Init();    
         BSP_GYRO_Init();
         calibration();
-        _event_queue.call_every(1, this, &Sensors::update);
-    }
-private: 
-    // void getSensorData(int* readings_high, int* readings_low, int16_t* pDataXYZ, float* pGyroDataXYZ) {
-    void getSensorData( uint8_t& _right, uint8_t& _jump, uint8_t& _attack) {
-        accelerometer_high.getOutput(readings_high);
-        accelerometer_low.getOutput(readings_low);
-        BSP_ACCELERO_AccGetXYZ(pDataXYZ);
-        BSP_GYRO_GetXYZ(pGyroDataXYZ);
-        for (int i = 0; i < 3; i++) {
-            readings_high[i] = readings_high[i] - offsets_high[i];
-            readings_low[i] = readings_low[i] - offsets_low[i];
-            pDataXYZ[i] = pDataXYZ[i] - AccOffset[i];
-            pGyroDataXYZ[i] = pGyroDataXYZ[i] - GyroOffset[i];
-        } 
-        // TODO transfer to right jump and attack here
-        _right += 1;
-        _jump += 1;
-        _attack += 1;
+        // _event_queue.call_every(1, this, &Sensors::update);
     }
     void calibration()
     {
-        int readings_high[3] = {};
-        int readings_low[3] = {};
-        int16_t pDataXYZ[3] = {};
-        float pGyroDataXYZ[3] = {};
+        // int readings_high[3] = {};
+        // int readings_low[3] = {};
+        // int16_t pDataXYZ[3] = {};
+        // float pGyroDataXYZ[3] = {};
 
         int _sample_num = 0;
         printf("calibrate...\n");
@@ -173,6 +145,27 @@ private:
         _sample_num = 0;
     }
 private:
+    int readings_high[3], readings_low[3];
+    int16_t pDataXYZ[3];
+    float pGyroDataXYZ[3];
+    void getSensorData( uint8_t& _right, uint8_t& _jump, uint8_t& _attack) {
+        accelerometer_high.getOutput(readings_high);
+        accelerometer_low.getOutput(readings_low);
+        BSP_ACCELERO_AccGetXYZ(pDataXYZ);
+        BSP_GYRO_GetXYZ(pGyroDataXYZ);
+        for (int i = 0; i < 3; i++) {
+            readings_high[i] = readings_high[i] - offsets_high[i];
+            readings_low[i] = readings_low[i] - offsets_low[i];
+            pDataXYZ[i] = pDataXYZ[i] - AccOffset[i];
+            pGyroDataXYZ[i] = pGyroDataXYZ[i] - GyroOffset[i];
+        } 
+        // TODO transfer to right jump and attack here
+        _right += 1;
+        _jump += 1;
+        _attack += 1;
+    }
+    
+private:
     events::EventQueue &_event_queue;
     ADXL345_I2C accelerometer_high;
     ADXL345_I2C accelerometer_low;
@@ -183,7 +176,7 @@ private:
     float GyroOffset[3] = {};
     int offsets_high[3] = {};
     int offsets_low[3] = {};
-}
+};
 
 class MySensorDemo : ble::Gap::EventHandler {
 public:
@@ -195,8 +188,8 @@ public:
         _uuid(GattService::UUID_MY_SENSOR_SERVICE),
         _service(ble, player),
         _adv_data_builder(_adv_buffer),
-        _sensor(mysensor),
-        _right(0),_angle(0),_send_count(0), _jump(0) { }
+        _sensor(mysensor)
+        {}
 
     void start() {
         _ble.gap().setEventHandler(this);
@@ -333,7 +326,7 @@ void schedule_ble_events(BLE::OnEventsToProcessCallbackContext *context) {
 
 Sensors mysensor(event_queue);
 void calibration() {
-    event_queue.call(callback(&mysensor, &Sensors::calibration);
+    event_queue.call(callback(&mysensor, &Sensors::calibration));
 }
 
 int main() {
