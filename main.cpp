@@ -106,15 +106,10 @@ public:
         BSP_ACCELERO_Init();    
         BSP_GYRO_Init();
         calibration();
-        // _event_queue.call_every(1, this, &Sensors::update);
+        _event_queue.call_every(1, this, &Sensors::update);
     }
     void calibration()
     {
-        // int readings_high[3] = {};
-        // int readings_low[3] = {};
-        // int16_t pDataXYZ[3] = {};
-        // float pGyroDataXYZ[3] = {};
-
         int _sample_num = 0;
         printf("calibrate...\n");
 
@@ -144,11 +139,7 @@ public:
         printf("Done calibration\n");
         _sample_num = 0;
     }
-private:
-    int readings_high[3], readings_low[3];
-    int16_t pDataXYZ[3];
-    float pGyroDataXYZ[3];
-    void getSensorData( uint8_t& _right, uint8_t& _jump, uint8_t& _attack) {
+    void update() {
         accelerometer_high.getOutput(readings_high);
         accelerometer_low.getOutput(readings_low);
         BSP_ACCELERO_AccGetXYZ(pDataXYZ);
@@ -159,6 +150,8 @@ private:
             pDataXYZ[i] = pDataXYZ[i] - AccOffset[i];
             pGyroDataXYZ[i] = pGyroDataXYZ[i] - GyroOffset[i];
         } 
+    }
+    void getSensorData( uint8_t& _right, uint8_t& _jump, uint8_t& _attack) {
         // TODO transfer to right jump and attack here
         _right += 1;
         _jump += 1;
@@ -176,6 +169,10 @@ private:
     float GyroOffset[3] = {};
     int offsets_high[3] = {};
     int offsets_low[3] = {};
+    int readings_high[3] = {};
+    int readings_low[3] = {};
+    int16_t pDataXYZ[3] = {};
+    float pGyroDataXYZ[3] = {};
 };
 
 class MySensorDemo : ble::Gap::EventHandler {
