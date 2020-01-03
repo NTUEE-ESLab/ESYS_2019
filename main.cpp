@@ -6,8 +6,12 @@
 #include <mbed.h>
 #include "ble/BLE.h"
 #include "ble/Gap.h"
+#include "gap/Gap.h"
+#include "gap/AdvertisingDataParser.h"
 #include "ble/services/HeartRateService.h"
 #include "MyService.h"
+#include "pretty_printer.h"
+
 const static char DEVICE_NAME[] = "MySensor";
 // #include "pretty_printer.h"
 // I2C
@@ -177,6 +181,8 @@ private:
     void blink(void) {
         _led1 = !_led1;
     }
+
+
 private:
     /* Event handler */
 
@@ -190,6 +196,7 @@ private:
             _connected = true;
         }
     }
+    
 
 private:
     BLE &_ble;
