@@ -5,10 +5,8 @@
 #include <events/mbed_events.h>
 #include <mbed.h>
 #include "ble/BLE.h"
-#include "ble/Gap.h"
-#include "gap/Gap.h"
-#include "gap/AdvertisingDataParser.h"
-#include "ble/services/HeartRateService.h"
+#include "ble/gap/Gap.h"
+// #include "ble/services/HeartRateService.h"
 #include "MyService.h"
 #include "pretty_printer.h"
 
@@ -20,6 +18,15 @@ I2C i2c(I2C_SDA , I2C_SCL);
 ADXL345_I2C accelerometer_high(I2C_SDA, I2C_SCL, 0x1D);
 ADXL345_I2C accelerometer_low(I2C_SDA, I2C_SCL, 0x53);
 
+Serial pc(USBTX, USBRX);
+
+/*
+    SPI_MOSI    = D11,
+    SPI_MISO    = D12,
+    SPI_SCK     = D13,
+    SPI_CS      = D10,
+*/
+// ADXL345 accelerometer(D11, D12, D13, D10);
 
 // int readings_high[3] = {0, 0, 0};
 // int readings_low[3] = {0, 0, 0};
@@ -343,6 +350,7 @@ int main() {
     }
     printf("done\n");
     
+    pc.baud(115200);
     BLE &ble = BLE::Instance();
     ble.onEventsToProcess(schedule_ble_events);
 
