@@ -5,10 +5,8 @@
 #include <events/mbed_events.h>
 #include <mbed.h>
 #include "ble/BLE.h"
-#include "ble/Gap.h"
-#include "gap/Gap.h"
-#include "gap/AdvertisingDataParser.h"
-#include "ble/services/HeartRateService.h"
+#include "ble/gap/Gap.h"
+// #include "ble/services/HeartRateService.h"
 #include "MyService.h"
 #include "pretty_printer.h"
 
@@ -24,6 +22,8 @@ const int addr7bit = 0x53;      // 7-bit I2C address
 const int addr8bit = 0x53 << 1; // 8-bit I2C address
 ADXL345_I2C accelerometer_high(I2C_SDA, I2C_SCL, 0x1D);
 ADXL345_I2C accelerometer_low(I2C_SDA, I2C_SCL, 0x53);
+
+Serial pc(USBTX, USBRX);
 
 /*
     SPI_MOSI    = D11,
@@ -224,6 +224,7 @@ void schedule_ble_events(BLE::OnEventsToProcessCallbackContext *context) {
 
 
 int main() {
+    pc.baud(115200);
     BLE &ble = BLE::Instance();
     ble.onEventsToProcess(schedule_ble_events);
 

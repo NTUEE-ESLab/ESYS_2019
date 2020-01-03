@@ -206,7 +206,7 @@ protected:
             valueBytes[3] = player;
         }
 
-        void updateInfo(uint8_t* readings)
+        void updateInfo(uint8_t right, uint8_t up, uint8_t angle)
         {
             // if (hrmCounter <= 255) {
             //     valueBytes[FLAGS_BYTE_INDEX] &= ~VALUE_FORMAT_FLAG;
@@ -217,13 +217,13 @@ protected:
             //     valueBytes[FLAGS_BYTE_INDEX + 2] = (uint8_t)(hrmCounter >> 8);
             // }
 
-            // valueBytes[0] = right;
-            // valueBytes[1] = up;
-            // valueBytes[2] = angle;
+            valueBytes[0] = right;
+            valueBytes[1] = up;
+            valueBytes[2] = angle;
 
-            for (int i = 0; i < 6; i++){
-                valueBytes[i] = readings[i];
-            }
+            // for (int i = 0; i < 6; i++){
+            //     valueBytes[i] = readings[i];
+            // }
         }
 
         uint8_t *getPointer(void)
