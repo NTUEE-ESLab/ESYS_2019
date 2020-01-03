@@ -166,7 +166,7 @@ public:
              valueBytes.getNumValueBytes()
          );
          
-         pc.printf("%d, %d, %d\n", valueBytes.getPointer()[0], valueBytes.getPointer()[1], valueBytes.getPointer()[2]);
+        //  pc.printf("%d, %d, %d\n", valueBytes.getPointer()[0], valueBytes.getPointer()[1], valueBytes.getPointer()[2]);
     }
 
 protected:

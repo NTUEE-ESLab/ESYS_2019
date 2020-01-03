@@ -74,10 +74,10 @@ public:
     _event_queue(event_queue),
     accelerometer_high(I2C_SDA, I2C_SCL, 0x1D),
     accelerometer_low(I2C_SDA, I2C_SCL, 0x53) {
-        printf("Starting ADXL345 test...\n");
+        pc.printf("Starting ADXL345 test...\n");
         wait_us(10000);
-        printf("Device ID(HIGH) is: 0x%02x\n", accelerometer_high.getDeviceID());
-        printf("Device ID(LOW) is: 0x%02x\n", accelerometer_low.getDeviceID());
+        pc.printf("Device ID(HIGH) is: 0x%02x\n", accelerometer_high.getDeviceID());
+        pc.printf("Device ID(LOW) is: 0x%02x\n", accelerometer_low.getDeviceID());
 
         // printf("Device ID is: 0x%02x\n", accelerometer.getDevId());
         wait_us(10000);
@@ -106,12 +106,13 @@ public:
         BSP_ACCELERO_Init();    
         BSP_GYRO_Init();
         calibration();
-        _event_queue.call_every(1, this, &Sensors::update);
+        wait_us(6555555);
+        _event_queue.call_every(10, this, &Sensors::update);
     }
     void calibration()
     {
         int _sample_num = 0;
-        printf("calibrate...\n");
+        pc.printf("calibrate...\n");
 
         while (_sample_num < 500) {
             _sample_num++;
@@ -136,7 +137,13 @@ public:
             AccOffset[i] /= _sample_num;
         }
 
-        printf("Done calibration\n");
+        for (int i = 0; i < 3; ++i) {
+            offsets_high[i] = 0;
+            offsets_low[i] = 0;
+            // GyroOffset[i] = pGyroDataXYZ[i];
+            // AccOffset[i] = pDataXYZ[i];
+        }
+        pc.printf("Done calibration\n");
         _sample_num = 0;
     }
     void update() {
@@ -149,13 +156,21 @@ public:
             readings_low[i] = readings_low[i] - offsets_low[i];
             pDataXYZ[i] = pDataXYZ[i] - AccOffset[i];
             pGyroDataXYZ[i] = pGyroDataXYZ[i] - GyroOffset[i];
-        } 
+        }
+        printSensorValue();
     }
     void getSensorData( uint8_t& _right, uint8_t& _jump, uint8_t& _attack) {
         // TODO transfer to right jump and attack here
         _right += 1;
         _jump += 1;
         _attack += 1;
+    }
+
+    void printSensorValue(){
+        pc.printf("HIGH %i, %i, %i   LOW %i, %i, %i   ACC %d, %d, %d  Gyro %.2f, %.2f, %.2f \n", (int16_t)(readings_high[0]-offsets_high[0]), (int16_t)(readings_high[1]-offsets_high[1]), (int16_t)(readings_high[2]-offsets_high[2]),
+        (int16_t)(readings_low[0]), (int16_t)(readings_low[1]), (int16_t)(readings_low[2]), 
+        pDataXYZ[0], pDataXYZ[1], pDataXYZ[2], 
+        (pGyroDataXYZ[0]) * SCALE_MULTIPLIER, (pGyroDataXYZ[1]) * SCALE_MULTIPLIER, (pGyroDataXYZ[2]) * SCALE_MULTIPLIER);
     }
     
 private:
@@ -274,7 +289,6 @@ private:
             _attack+=1;
 
             _service.updateInfo(_right, _jump, _attack);
-            printf("%lld\n", ++_send_count);
         } 
     }
 
@@ -321,26 +335,27 @@ void schedule_ble_events(BLE::OnEventsToProcessCallbackContext *context) {
     event_queue.call(Callback<void()>(&context->ble, &BLE::processEvents));
 }
 
-Sensors mysensor(event_queue);
-void calibration() {
-    event_queue.call(callback(&mysensor, &Sensors::calibration));
-}
+// Sensors mysensor(event_queue);
+// void calibration() {
+//     event_queue.call(callback(&mysensor, &Sensors::calibration));
+// }
 
 int main() {
 
-    // I2C device check
-    printf("start\n");
-    int ack;
-    for(int i = 0; i < 256 ; i++) {
-       ack = i2c.write(i, 0x00, 1);
-        if (ack == 0) {
-            printf("\tFound at %3d -- %3x\r\n", i, i);
-        }
-        wait(0.05);
-    }
-    printf("done\n");
-    
     pc.baud(115200);
+    // I2C device check
+    // pc.printf("start\n");
+    // int ack;
+    // for(int i = 0; i < 256 ; i++) {
+    //    ack = i2c.write(i, 0x00, 1);
+    //     if (ack == 0) {
+    //         pc.printf("\tFound at %3d -- %3x\r\n", i, i);
+    //     }
+    //     wait(0.05);
+    // }
+    // pc.printf("done\n");
+    Sensors mysensor(event_queue);
+    
     BLE &ble = BLE::Instance();
     ble.onEventsToProcess(schedule_ble_events);
 
