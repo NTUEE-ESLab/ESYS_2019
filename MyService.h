@@ -158,8 +158,8 @@ public:
     //     );
     // }
 
-    void updateInfo(uint8_t right, uint8_t up, uint8_t angle) {
-         valueBytes.updateInfo(right, up, angle);
+    void updateInfo(uint8_t right, uint8_t jump, uint8_t angle) {
+         valueBytes.updateInfo(right, jump, angle);
          ble.gattServer().write(
              ch.getValueHandle(),
              valueBytes.getPointer(),
@@ -180,7 +180,7 @@ protected:
         };
         GattService myService(
             // GattService::UUID_HEART_RATE_SERVICE,
-            GattService::UUID_MY_SERVICE,
+            GattService::UUID_MY_SENSOR_SERVICE,
             charTable,
             sizeof(charTable) / sizeof(GattCharacteristic*)
         );
