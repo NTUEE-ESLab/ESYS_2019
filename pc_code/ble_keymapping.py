@@ -30,10 +30,11 @@ print ("Services...")
 for svc in dev.services:
     print (str(svc))
 try:
-    testService = dev.getServiceByUUID('f0001120-0451-4000-b000-000000000000')
+    testService = dev.getServiceByUUID(UUID(0xA000))
     for ch in testService.getCharacteristics():
         print (str(ch))
-    ch = dev.getCharacteristics(uuid='f0001121-0451-4000-b000-000000000000')[0]
+    ch = dev.getCharacteristics(uuid=UUID(0xA001))[0]
+    print (ch)
     if (ch.supportsRead()):
         while (True):
             #TODO: read STM32 input and output keymapping
@@ -57,7 +58,8 @@ try:
             keyboard.type("hello world")
             '''
             a = ch.read()
-            if a != '\0':
-                print ('hahahahahaha')
+            print (a)
+    else:
+        print (ch, "does not supports read")
 finally:
     dev.disconnect()
