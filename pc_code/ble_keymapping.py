@@ -36,6 +36,8 @@ try:
     ch = dev.getCharacteristics(uuid=UUID(0xA001))[0]
     print (ch)
     if (ch.supportsRead()):
+        from pynput.keyboard import Key, Controller
+        keyboard = Controller()
         while (True):
             #TODO: read STM32 input and output keymapping
             '''
@@ -57,8 +59,42 @@ try:
             #type "hello world "  using the shortcut type  method
             keyboard.type("hello world")
             '''
+
+            '''
+                a[0]: _walk
+                a[1]: _direction (0=left, 1=no, 2=right)
+                a[2]: _jump
+                a[3]: _attack
+            '''
+
             a = ch.read()
-            print (a)
+            print(a)
+            if a[0] == 1:
+                if a[1] == 0:
+                    keyboard.release(Key.right)
+                    keyboard.press(Key.left)
+                elif a[1] == 2:
+                    keyboard.release(Key.left)
+                    keyboard.press(Key.right)
+                else:
+                    keyboard.release(Key.left)
+                    keyboard.release(Key.right)
+            else:
+                keyboard.release(Key.left)
+                keyboard.release(Key.right)
+
+            if a[2] == 1:
+                keyboard.press(Key.space)
+                keyboard.release(Key.space)
+
+            if a[3] == 1:
+                keyboard.press(Key.ctrl)
+                keyboard.release(Key.ctrl)
+
+
+            if a[2] == 1:
+                keyboard.press("a")
+                keyboard.release("a")
     else:
         print (ch, "does not supports read")
 finally:
