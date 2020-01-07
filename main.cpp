@@ -107,16 +107,27 @@ public:
         _sample_num = 0;
     }
     
-    void getSensorData( uint8_t& _walk, uint8_t& _right, uint8_t& _jump, uint8_t& _attack) {
+    void getSensorData( uint8_t& _walk, uint8_t& _direction, uint8_t& _jump, uint8_t& _attack) {
         // TODO transfer to right jump and attack here
-        if ( (getStd(buffer_high_x) + getStd(buffer_high_y) + getStd(buffer_high_z)) > 60000 ) _walk = 1;
-        else _walk = 0;
-        if ( (getStd(buffer_low_x) + getStd(buffer_low_y) + getStd(buffer_low_z)) > 70000 ) _attack = 1;
-        else _attack = 0;
-        if ( getStd(buffer_stm) > 30000 ) _jump = 1;
-        else _jump = 0;
+        _walk = 0;
+        _jump = 0;
+        _attack = 0;
+        _direction = 1;
+        if ( getStd(buffer_stm_x)  > 900 ) _jump = 1;
+        if ( _jump == 0 && (getStd(buffer_high_x) + getStd(buffer_high_y) + getStd(buffer_high_z)) > 60000 ) _walk = 1;
 
-        _right += 1;
+        if ( (getStd(buffer_low_x) + getStd(buffer_low_y) + getStd(buffer_low_z)) > 70000 ) _attack = 1;
+
+        /*
+            _direction:
+            0 for left
+            1 for no direction
+            2 for right
+        */
+        if (angle[0] > 1000) _direction = 0;
+        else if(angle[0] < -1000) _direction = 2;
+        else _direction = 1;
+        
     }
 
     void printSensorValue(){
@@ -128,8 +139,12 @@ public:
 
     void printStd(){
         // pc.printf("HIGH: %10f %10f %10f\n", getStd(buffer_high_x), getStd(buffer_high_y), getStd(buffer_high_z));
-        pc.printf("HIGH: %10f %10f %10f    LOW: %10f %10f %10f\n", getStd(buffer_high_x), getStd(buffer_high_y), getStd(buffer_high_z), 
-        getStd(buffer_low_x), getStd(buffer_low_y), getStd(buffer_low_z));
+        // pc.printf("HIGH: %10f %10f %10f    LOW: %10f %10f %10f  JUMP: %10f %10f %10f \n", getStd(buffer_high_x), getStd(buffer_high_y), getStd(buffer_high_z), 
+        // getStd(buffer_low_x), getStd(buffer_low_y), getStd(buffer_low_z), getStd(buffer_stm_x), getStd(buffer_stm_y), getStd(buffer_stm_z));
+        // pc.printf("Gyro: %10f %10f %10f\n", (pGyroDataXYZ[0]) * SCALE_MULTIPLIER, (pGyroDataXYZ[1]) * SCALE_MULTIPLIER, (pGyroDataXYZ[2]) * SCALE_MULTIPLIER);
+        // pc.printf("Angle: %10f %10f %10f  Gyro: %10f %10f %10f\n", angle[0], angle[1], angle[2], 
+        // (pGyroDataXYZ[0]) * SCALE_MULTIPLIER, (pGyroDataXYZ[1]) * SCALE_MULTIPLIER, (pGyroDataXYZ[2]) * SCALE_MULTIPLIER);
+        pc.printf("JUMP: %10f %10f %10f \n", getStd(buffer_stm_x), getStd(buffer_stm_y), getStd(buffer_stm_z));
 
         // pc.printf("HIGH: %10f  LOW: %10f  ACC: %10f\n", getStd(buffer_high), getStd(buffer_low), getStd(buffer_stm));
     }
@@ -149,6 +164,8 @@ private:
     int readings_low[3] = {};
     int16_t pDataXYZ[3] = {};
     float pGyroDataXYZ[3] = {};
+    float pGyroDataXYZ_prev[3] = {};
+    float angle[3] = {};
 
     // sliding window buffers
     int buffer_high_x[BUFFER_SIZE] = {};
@@ -157,7 +174,10 @@ private:
     int buffer_low_x[BUFFER_SIZE] = {};
     int buffer_low_y[BUFFER_SIZE] = {};
     int buffer_low_z[BUFFER_SIZE] = {};
-    int buffer_stm[BUFFER_SIZE] = {};
+    int buffer_stm_x[BUFFER_SIZE] = {};
+    int buffer_stm_y[BUFFER_SIZE] = {};
+    int buffer_stm_z[BUFFER_SIZE] = {};
+
 
     // buffer pointer position
     int buffer_p = 0;
@@ -192,7 +212,27 @@ private:
         buffer_low_y[buffer_p] = (float)readings_low[1];
         buffer_low_z[buffer_p] = (float)readings_low[2];
 
-        buffer_stm[buffer_p] = sqrt(pow((float)pGyroDataXYZ[0],2)+pow((float)pGyroDataXYZ[1],2)+pow((float)pGyroDataXYZ[2],2));
+        buffer_stm_x[buffer_p] = (float)pDataXYZ[0];
+        buffer_stm_y[buffer_p] = (float)pDataXYZ[1];
+        buffer_stm_z[buffer_p] = (float)pDataXYZ[2];
+
+        wait(TIMESTEP);
+
+        for (int i = 0; i < 3; i++){
+            // save readings into buffers
+            buffer_high_x[buffer_p] = (float)readings_high[i];
+            buffer_low_x[buffer_p] = (float)readings_low[i];
+            buffer_stm_x[buffer_p] = (float)pDataXYZ[i];
+
+            // integrate angle
+            if (abs(pGyroDataXYZ[i]) * SCALE_MULTIPLIER > 30){
+                angle[i] += (pGyroDataXYZ[i] + pGyroDataXYZ_prev[i]) / 2 * TIMESTEP * SCALE_MULTIPLIER;
+            }
+
+            pGyroDataXYZ_prev[i] = pGyroDataXYZ[i];
+        }
+
+        // buffer_stm[buffer_p] = sqrt(pow((float)pGyroDataXYZ[0],2)+pow((float)pGyroDataXYZ[1],2)+pow((float)pGyroDataXYZ[2],2));
 
         buffer_p = (buffer_p+1) % BUFFER_SIZE;
 
@@ -288,7 +328,7 @@ private:
         // int16_t pDataXYZ[3] = {};
         // float pGyroDataXYZ[3] = {};
         uint8_t _walk = 0;
-        uint8_t _right = 0;
+        uint8_t _direction = 1; // 1 for default (no direction)
         uint8_t _jump = 0;
         uint8_t _attack = 0;
         if (_connected) {
@@ -296,9 +336,9 @@ private:
             // In our case, we simply update the HRM measgetSensorData
             // sensor get left&right, hit, jump
             // _sensor -> getSensorData(&_right, &_jump, &_attack);
-            _sensor -> getSensorData(_walk, _right, _jump, _attack);
+            _sensor -> getSensorData(_walk, _direction, _jump, _attack);
 
-            _service.updateInfo(_walk,_right, _jump, _attack);
+            _service.updateInfo(_walk, _direction, _jump, _attack);
         } 
     }
 
