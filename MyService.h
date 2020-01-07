@@ -158,8 +158,8 @@ public:
     //     );
     // }
 
-    void updateInfo(uint8_t right, uint8_t jump, uint8_t angle) {
-         valueBytes.updateInfo(right, jump, angle);
+    void updateInfo(uint8_t walk, uint8_t right, uint8_t jump, uint8_t attack) {
+         valueBytes.updateInfo( walk, right, jump, attack);
          ble.gattServer().write(
              ch.getValueHandle(),
              valueBytes.getPointer(),
@@ -202,11 +202,11 @@ protected:
 
         MyValueBytes(uint8_t player) : valueBytes()
         {
-            updateInfo(0, 0, 0);
-            valueBytes[3] = player;
+            updateInfo(0, 0, 0, 0);
+            // valueBytes[4] = player;
         }
 
-        void updateInfo(uint8_t right, uint8_t up, uint8_t angle)
+        void updateInfo(uint8_t walk, uint8_t right, uint8_t up, uint8_t attack)
         {
             // if (hrmCounter <= 255) {
             //     valueBytes[FLAGS_BYTE_INDEX] &= ~VALUE_FORMAT_FLAG;
@@ -216,10 +216,10 @@ protected:
             //     valueBytes[FLAGS_BYTE_INDEX + 1] = (uint8_t)(hrmCounter & 0xFF);
             //     valueBytes[FLAGS_BYTE_INDEX + 2] = (uint8_t)(hrmCounter >> 8);
             // }
-
-            valueBytes[0] = right;
-            valueBytes[1] = up;
-            valueBytes[2] = angle;
+            valueBytes[0] = walk;
+            valueBytes[1] = right;
+            valueBytes[2] = up;
+            valueBytes[3] = attack;
 
             // for (int i = 0; i < 6; i++){
             //     valueBytes[i] = readings[i];
@@ -238,11 +238,6 @@ protected:
 
         unsigned getNumValueBytes(void) const
         {
-            // if (valueBytes[FLAGS_BYTE_INDEX] & VALUE_FORMAT_FLAG) {
-            //     return 1 + sizeof(uint16_t);
-            // } else {
-            //     return 1 + sizeof(uint8_t);
-            // }
 
             return MAX_VALUE_BYTES;
         }
