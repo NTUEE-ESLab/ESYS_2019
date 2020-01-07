@@ -126,7 +126,7 @@ public:
             valueBytes.getPointer(),
             valueBytes.getNumValueBytes(),
             MyValueBytes::MAX_VALUE_BYTES,
-            GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_NOTIFY
+            GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ
         )
         // hrmLocation(
         //     GattCharacteristic::UUID_BODY_SENSOR_LOCATION_CHAR,

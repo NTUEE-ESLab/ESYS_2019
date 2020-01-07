@@ -222,8 +222,8 @@ private:
 
         buffer_p = (buffer_p+1) % BUFFER_SIZE;
 
-        printSensorValue();
-        // printStd();
+        // printSensorValue();
+        printStd();
     }
 };
 
