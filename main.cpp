@@ -21,59 +21,16 @@ ADXL345_I2C accelerometer_high(I2C_SDA, I2C_SCL, 0x1D);
 ADXL345_I2C accelerometer_low(I2C_SDA, I2C_SCL, 0x53);
 
 Serial pc(USBTX, USBRX);
-// int readings_high[3] = {0, 0, 0};
-// int readings_low[3] = {0, 0, 0};
 
-// int offsets_high[3] = {0, 0, 0};
-// int offsets_low[3] = {0, 0, 0};
-
-// uint8_t rawReadings[6];
-
-// int16_t pDataXYZ[3] = {0};
-// float pGyroDataXYZ[3] = {0};
-// int   AccOffset[3] = {};
-// float GyroOffset[3] = {};
-
-// void calibration()
-// {
-//     int _sample_num = 0;
-//     printf("calibrate...\n");
-
-//     while (_sample_num < 500) {
-//         _sample_num++;
-//         accelerometer_high.getOutput(readings_high);
-//         accelerometer_low.getOutput(readings_low);
-//         BSP_GYRO_GetXYZ(pGyroDataXYZ);
-//         BSP_ACCELERO_AccGetXYZ(pDataXYZ);
-
-//         for (int i = 0; i < 3; ++i) {
-//             offsets_high[i] += readings_high[i];
-//             offsets_low[i] += readings_low[i];
-//             GyroOffset[i] += pGyroDataXYZ[i];
-//             AccOffset[i] += pDataXYZ[i];
-//         }
-//         wait(0.0005);
-//     }
-
-//     for (int i = 0; i < 3; ++i) {
-//         offsets_high[i] /= _sample_num;
-//         offsets_low[i] /= _sample_num;
-//         GyroOffset[i] /= _sample_num;
-//         AccOffset[i] /= _sample_num;
-//     }
-
-//     printf("Done calibration\n");
-//     _sample_num = 0;
-// }
 
 // BLE
 static events::EventQueue event_queue(/* event count */ 16 * EVENTS_EVENT_SIZE);
 
 class Sensors {
 #define SCALE_MULTIPLIER    0.045
-#define BUFFER_SIZE 100
+#define BUFFER_SIZE 50
 public:
-    Sensors(events::EventQueue &event_queue) : 
+    Sensors(events::EventQueue &event_queue) :
     _event_queue(event_queue),
     accelerometer_high(I2C_SDA, I2C_SCL, 0x1D),
     accelerometer_low(I2C_SDA, I2C_SCL, 0x53) {
@@ -150,12 +107,15 @@ public:
         _sample_num = 0;
     }
     
-    void getSensorData( uint8_t& _right, uint8_t& _jump, uint8_t& _attack) {
+    void getSensorData( uint8_t& _walk, uint8_t& _right, uint8_t& _jump, uint8_t& _attack) {
         // TODO transfer to right jump and attack here
-        if (getStd(buffer_stm)>30000) _jump = 1;
-        else _jump = 0;
-        if (getStd(buffer_high)>30000 && _jump == 0) _attack = 1;
+        if ( (getStd(buffer_high_x) + getStd(buffer_high_y) + getStd(buffer_high_z)) > 60000 ) _walk = 1;
+        else _walk = 0;
+        if ( (getStd(buffer_low_x) + getStd(buffer_low_y) + getStd(buffer_low_z)) > 70000 ) _attack = 1;
         else _attack = 0;
+        if ( getStd(buffer_stm) > 30000 ) _jump = 1;
+        else _jump = 0;
+
         _right += 1;
     }
 
@@ -167,7 +127,11 @@ public:
     }
 
     void printStd(){
-        pc.printf("HIGH: %10f  LOW: %10f  ACC: %10f\n", getStd(buffer_high), getStd(buffer_low), getStd(buffer_stm));
+        // pc.printf("HIGH: %10f %10f %10f\n", getStd(buffer_high_x), getStd(buffer_high_y), getStd(buffer_high_z));
+        pc.printf("HIGH: %10f %10f %10f    LOW: %10f %10f %10f\n", getStd(buffer_high_x), getStd(buffer_high_y), getStd(buffer_high_z), 
+        getStd(buffer_low_x), getStd(buffer_low_y), getStd(buffer_low_z));
+
+        // pc.printf("HIGH: %10f  LOW: %10f  ACC: %10f\n", getStd(buffer_high), getStd(buffer_low), getStd(buffer_stm));
     }
     
 private:
@@ -187,8 +151,12 @@ private:
     float pGyroDataXYZ[3] = {};
 
     // sliding window buffers
-    int buffer_high[BUFFER_SIZE] = {};
-    int buffer_low[BUFFER_SIZE] = {};
+    int buffer_high_x[BUFFER_SIZE] = {};
+    int buffer_high_y[BUFFER_SIZE] = {};
+    int buffer_high_z[BUFFER_SIZE] = {};
+    int buffer_low_x[BUFFER_SIZE] = {};
+    int buffer_low_y[BUFFER_SIZE] = {};
+    int buffer_low_z[BUFFER_SIZE] = {};
     int buffer_stm[BUFFER_SIZE] = {};
 
     // buffer pointer position
@@ -216,14 +184,20 @@ private:
             pGyroDataXYZ[i] = pGyroDataXYZ[i] - GyroOffset[i];
         }
 
-        buffer_high[buffer_p] = sqrt(pow((float)readings_high[0],2)+pow((float)readings_high[1],2)+pow((float)readings_high[2],2));
-        buffer_low[buffer_p] = sqrt(pow((float)readings_low[0],2)+pow((float)readings_low[1],2)+pow((float)readings_low[2],2));
+        buffer_high_x[buffer_p] = (float)readings_high[0];
+        buffer_high_y[buffer_p] = (float)readings_high[1];
+        buffer_high_z[buffer_p] = (float)readings_high[2];
+
+        buffer_low_x[buffer_p] = (float)readings_low[0];
+        buffer_low_y[buffer_p] = (float)readings_low[1];
+        buffer_low_z[buffer_p] = (float)readings_low[2];
+
         buffer_stm[buffer_p] = sqrt(pow((float)pGyroDataXYZ[0],2)+pow((float)pGyroDataXYZ[1],2)+pow((float)pGyroDataXYZ[2],2));
 
         buffer_p = (buffer_p+1) % BUFFER_SIZE;
 
-        printSensorValue();
-        // printStd();
+        // printSensorValue();
+        printStd();
     }
 };
 
@@ -313,6 +287,7 @@ private:
         // int readings_low[3] = {};
         // int16_t pDataXYZ[3] = {};
         // float pGyroDataXYZ[3] = {};
+        uint8_t _walk = 0;
         uint8_t _right = 0;
         uint8_t _jump = 0;
         uint8_t _attack = 0;
@@ -321,9 +296,9 @@ private:
             // In our case, we simply update the HRM measgetSensorData
             // sensor get left&right, hit, jump
             // _sensor -> getSensorData(&_right, &_jump, &_attack);
-            _sensor -> getSensorData(_right, _jump, _attack);
+            _sensor -> getSensorData(_walk, _right, _jump, _attack);
 
-            _service.updateInfo(_right, _jump, _attack);
+            _service.updateInfo(_walk,_right, _jump, _attack);
         } 
     }
 
