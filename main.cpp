@@ -15,6 +15,8 @@
 const static char DEVICE_NAME[] = "MySensor";
 // I2C
 I2C i2c(I2C_SDA , I2C_SCL);
+InterruptIn button(USER_BUTTON);
+
 #define TIMESTEP            0.05
 #define SCALE_MULTIPLIER    0.045
 ADXL345_I2C accelerometer_high(I2C_SDA, I2C_SCL, 0x1D);
@@ -71,6 +73,12 @@ public:
     }
     void calibration()
     {
+        for (int i = 0; i < 3; ++i) {
+            offsets_high[i] = 0;
+            offsets_low[i] = 0;
+            GyroOffset[i] = 0;
+            AccOffset[i] = 0;
+        }
         int _sample_num = 0;
         pc.printf("calibrate...\n");
 
@@ -113,10 +121,10 @@ public:
         _jump = 0;
         _attack = 0;
         _direction = 1;
-        if ( getStd(buffer_stm)  > 470 ) _jump = 1;
+        if ( getStd(buffer_stm)  > 450 ) _jump = 1;
         if ( _jump == 0 && (getStd(buffer_high_x) + getStd(buffer_high_y) + getStd(buffer_high_z)) > 60000 ) _walk = 1;
 
-        if ( (getStd(buffer_low_x) + getStd(buffer_low_y) + getStd(buffer_low_z)) > 70000 ) _attack = 1;
+        if ( _jump == 0 && (getStd(buffer_low_x) + getStd(buffer_low_y) + getStd(buffer_low_z)) > 65000 ) _attack = 1;
 
         /*
             _direction:
@@ -124,8 +132,8 @@ public:
             1 for no direction
             2 for right
         */
-        if (angle[0] > 1500) _direction = 0;
-        else if(angle[0] < -1500) _direction = 2;
+        if (angle[0] > 1000) _direction = 0;
+        else if(angle[0] < -1000) _direction = 2;
         else _direction = 1;
         
     }
@@ -138,12 +146,12 @@ public:
     }
 
     void printStd(){
-         //pc.printf("HIGH: %10f JUMP %10f  all %10f all high %10f\n", getStd(buffer_high_x)+ getStd(buffer_high_y)+ getStd(buffer_high_z), getStd(buffer_stm_x)+ getStd(buffer_stm_y)+ getStd(buffer_stm_z), getStd(buffer_stm), getStd(buffer_high));
+         pc.printf("HIGH: %10f attack %10f  all jump %10f LOW: %10f %10f %10f\n", getStd(buffer_high_x)+ getStd(buffer_high_y)+ getStd(buffer_high_z), (getStd(buffer_low_x) + getStd(buffer_low_y) + getStd(buffer_low_z)), getStd(buffer_stm),getStd(buffer_low_x) , getStd(buffer_low_y) , getStd(buffer_low_z));
         // pc.printf("HIGH: %10f %10f %10f    Highavg: %10f %10f %10f  JUMPavg: %10f %10f %10f \n", getStd(buffer_high_x), getStd(buffer_high_y), getStd(buffer_high_z), 
          //getAvg(buffer_high_x), getAvg(buffer_high_y),getAvg(buffer_high_z), getAvg(buffer_stm_x), getAvg(buffer_stm_y),getAvg(buffer_stm_z) );
         // pc.printf("Gyro: %10f %10f %10f\n", (pGyroDataXYZ[0]) * SCALE_MULTIPLIER, (pGyroDataXYZ[1]) * SCALE_MULTIPLIER, (pGyroDataXYZ[2]) * SCALE_MULTIPLIER);
-        pc.printf("Angle: %10f %10f %10f  Gyro: %10f %10f %10f\n", angle[0], angle[1], angle[2], 
-         (pGyroDataXYZ[0]) * SCALE_MULTIPLIER, (pGyroDataXYZ[1]) * SCALE_MULTIPLIER, (pGyroDataXYZ[2]) * SCALE_MULTIPLIER);
+        // pc.printf("Angle: %10f %10f %10f  Gyro: %10f %10f %10f\n", angle[0], angle[1], angle[2], 
+        //  (pGyroDataXYZ[0]) * SCALE_MULTIPLIER, (pGyroDataXYZ[1]) * SCALE_MULTIPLIER, (pGyroDataXYZ[2]) * SCALE_MULTIPLIER);
         // pc.printf("HIGH: %10f %10f %10f   JUMP: %10f %10f %10f \n",getStd(buffer_high_x), getStd(buffer_high_y), getStd(buffer_high_z),getStd(buffer_stm_x), getStd(buffer_stm_y), getStd(buffer_stm_z));
         // pc.printf("erferfwerwferwfe");
         // pc.printf("HIGH: %10f  LOW: %10f  ACC: %10f\n", getStd(buffer_high), getStd(buffer_low), getStd(buffer_stm));
@@ -396,6 +404,11 @@ void schedule_ble_events(BLE::OnEventsToProcessCallbackContext *context) {
 // void calibration() {
 //     event_queue.call(callback(&mysensor, &Sensors::calibration));
 // }
+Sensors mysensor(event_queue);
+
+void reset() {
+    event_queue.call(Callback<void()>(&mysensor, &Sensors::calibration));
+}
 
 int main() {
 
@@ -411,13 +424,14 @@ int main() {
     //     wait(0.05);
     // }
     // pc.printf("done\n");
-    Sensors mysensor(event_queue);
     
     BLE &ble = BLE::Instance();
     ble.onEventsToProcess(schedule_ble_events);
 
     MySensorDemo demo(ble, event_queue, 1, &mysensor);
     demo.start();
+    button.fall(&reset);
+
 
     event_queue.dispatch_forever();
 
