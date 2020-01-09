@@ -98,8 +98,8 @@ public:
         }
 
         for (int i = 0; i < 3; ++i) {
-            offsets_high[i] = 0;
-            offsets_low[i] = 0;
+            // offsets_high[i] = 0;
+            // offsets_low[i] = 0;
             // GyroOffset[i] = pGyroDataXYZ[i];
             // AccOffset[i] = pDataXYZ[i];
         }
@@ -113,7 +113,7 @@ public:
         _jump = 0;
         _attack = 0;
         _direction = 1;
-        if ( getStd(buffer_stm_x)  > 900 ) _jump = 1;
+        if ( getStd(buffer_stm)  > 470 ) _jump = 1;
         if ( _jump == 0 && (getStd(buffer_high_x) + getStd(buffer_high_y) + getStd(buffer_high_z)) > 60000 ) _walk = 1;
 
         if ( (getStd(buffer_low_x) + getStd(buffer_low_y) + getStd(buffer_low_z)) > 70000 ) _attack = 1;
@@ -124,8 +124,8 @@ public:
             1 for no direction
             2 for right
         */
-        if (angle[0] > 1000) _direction = 0;
-        else if(angle[0] < -1000) _direction = 2;
+        if (angle[0] > 1500) _direction = 0;
+        else if(angle[0] < -1500) _direction = 2;
         else _direction = 1;
         
     }
@@ -138,12 +138,12 @@ public:
     }
 
     void printStd(){
-        // pc.printf("HIGH: %10f %10f %10f\n", getStd(buffer_high_x), getStd(buffer_high_y), getStd(buffer_high_z));
-         pc.printf("HIGH: %10f %10f %10f    LOW: %10f %10f %10f  JUMP: %10f %10f %10f \n", getStd(buffer_high_x), getStd(buffer_high_y), getStd(buffer_high_z), 
-         getStd(buffer_low_x), getStd(buffer_low_y), getStd(buffer_low_z), getStd(buffer_stm_x), getStd(buffer_stm_y), getStd(buffer_stm_z));
+         //pc.printf("HIGH: %10f JUMP %10f  all %10f all high %10f\n", getStd(buffer_high_x)+ getStd(buffer_high_y)+ getStd(buffer_high_z), getStd(buffer_stm_x)+ getStd(buffer_stm_y)+ getStd(buffer_stm_z), getStd(buffer_stm), getStd(buffer_high));
+        // pc.printf("HIGH: %10f %10f %10f    Highavg: %10f %10f %10f  JUMPavg: %10f %10f %10f \n", getStd(buffer_high_x), getStd(buffer_high_y), getStd(buffer_high_z), 
+         //getAvg(buffer_high_x), getAvg(buffer_high_y),getAvg(buffer_high_z), getAvg(buffer_stm_x), getAvg(buffer_stm_y),getAvg(buffer_stm_z) );
         // pc.printf("Gyro: %10f %10f %10f\n", (pGyroDataXYZ[0]) * SCALE_MULTIPLIER, (pGyroDataXYZ[1]) * SCALE_MULTIPLIER, (pGyroDataXYZ[2]) * SCALE_MULTIPLIER);
-        // pc.printf("Angle: %10f %10f %10f  Gyro: %10f %10f %10f\n", angle[0], angle[1], angle[2], 
-        // (pGyroDataXYZ[0]) * SCALE_MULTIPLIER, (pGyroDataXYZ[1]) * SCALE_MULTIPLIER, (pGyroDataXYZ[2]) * SCALE_MULTIPLIER);
+        pc.printf("Angle: %10f %10f %10f  Gyro: %10f %10f %10f\n", angle[0], angle[1], angle[2], 
+         (pGyroDataXYZ[0]) * SCALE_MULTIPLIER, (pGyroDataXYZ[1]) * SCALE_MULTIPLIER, (pGyroDataXYZ[2]) * SCALE_MULTIPLIER);
         // pc.printf("HIGH: %10f %10f %10f   JUMP: %10f %10f %10f \n",getStd(buffer_high_x), getStd(buffer_high_y), getStd(buffer_high_z),getStd(buffer_stm_x), getStd(buffer_stm_y), getStd(buffer_stm_z));
         // pc.printf("erferfwerwferwfe");
         // pc.printf("HIGH: %10f  LOW: %10f  ACC: %10f\n", getStd(buffer_high), getStd(buffer_low), getStd(buffer_stm));
@@ -177,6 +177,8 @@ private:
     int buffer_stm_x[BUFFER_SIZE] = {};
     int buffer_stm_y[BUFFER_SIZE] = {};
     int buffer_stm_z[BUFFER_SIZE] = {};
+    int buffer_stm[BUFFER_SIZE] = {};
+    int buffer_high[BUFFER_SIZE] = {};
 
 
     // buffer pointer position
@@ -236,8 +238,8 @@ private:
 
             pGyroDataXYZ_prev[i] = pGyroDataXYZ[i];
         }
-
-        // buffer_stm[buffer_p] = sqrt(pow((float)pGyroDataXYZ[0],2)+pow((float)pGyroDataXYZ[1],2)+pow((float)pGyroDataXYZ[2],2));
+        buffer_high[buffer_p] = sqrt(pow((float)readings_high[0],2)+pow((float)readings_high[1],2)+pow((float)readings_high[2],2));
+        buffer_stm[buffer_p] = sqrt(pow((float)pDataXYZ[0],2)+pow((float)pDataXYZ[1],2)+pow((float)pDataXYZ[2],2));
 
         buffer_p = (buffer_p+1) % BUFFER_SIZE;
 
@@ -419,52 +421,4 @@ int main() {
 
     event_queue.dispatch_forever();
 
-
-    // BSP_GYRO_Init();
-    // BSP_ACCELERO_Init();
-     
-    // printf("Starting ADXL345 test...\n");
-    // wait_us(10000);
-    // printf("Device ID(HIGH) is: 0x%02x\n", accelerometer_high.getDeviceID());
-    // printf("Device ID(LOW) is: 0x%02x\n", accelerometer_low.getDeviceID());
-
-    // // printf("Device ID is: 0x%02x\n", accelerometer.getDevId());
-    // wait_us(10000);
-    
-    // // These are here to test whether any of the initialization fails. It will print the failure
-    // accelerometer_high.setPowerControl(0x00);
-    // accelerometer_low.setPowerControl(0x00);
-
-    // //Full resolution, +/-16g, 4mg/LSB.
-    // wait_us(10000);
-     
-    // accelerometer_high.setDataFormatControl(0x0B);
-    // accelerometer_low.setDataFormatControl(0x0B);
-    // // pc.printf("didn't set data format\n");
-    // wait_us(10000);    
-     
-    // //3.2kHz data rate.
-    // accelerometer_high.setDataRate(ADXL345_3200HZ);
-    // accelerometer_low.setDataRate(ADXL345_3200HZ);
-    // wait_us(10000);
-     
-    // //Measurement mode.
-     
-    // accelerometer_high.setPowerControl(MeasurementMode); 
-    // accelerometer_low.setPowerControl(MeasurementMode); 
-    // calibration();   
- 
-    // while (1) {     
-    //     wait_us(10000);
-         
-    //     accelerometer_high.getOutput(readings_high);
-    //     accelerometer_low.getOutput(readings_low);
-    //     BSP_ACCELERO_AccGetXYZ(pDataXYZ);
-    //     BSP_GYRO_GetXYZ(pGyroDataXYZ);
-         
-    //     printf("HIGH %i, %i, %i   LOW %i, %i, %i   ACC %d, %d, %d  Gyro %.2f, %.2f, %.2f \n", (int16_t)(readings_high[0]-offsets_high[0]), (int16_t)(readings_high[1]-offsets_high[1]), (int16_t)(readings_high[2]-offsets_high[2]),
-    //     (int16_t)(readings_low[0]-offsets_low[0]), (int16_t)(readings_low[1]-offsets_low[1]), (int16_t)(readings_low[2]-offsets_low[2]), 
-    //     pDataXYZ[0]-AccOffset[0], pDataXYZ[1]-AccOffset[1], pDataXYZ[2]-AccOffset[2], 
-    //     (pGyroDataXYZ[0] - GyroOffset[0]) * SCALE_MULTIPLIER, (pGyroDataXYZ[1] - GyroOffset[1]) * SCALE_MULTIPLIER, (pGyroDataXYZ[2] - GyroOffset[2]) * SCALE_MULTIPLIER);
-    //  }
 }
