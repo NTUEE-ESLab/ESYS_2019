@@ -121,7 +121,7 @@ public:
         _jump = 0;
         _attack = 0;
         _direction = 1;
-        if ( getStd(buffer_stm)  > 450 ) _jump = 1;
+        if ( getStd(buffer_stm)  > 400 ) _jump = 1;
         if ( _jump == 0 && (getStd(buffer_high_x) + getStd(buffer_high_y) + getStd(buffer_high_z)) > 60000 ) _walk = 1;
 
         if ( _jump == 0 && (getStd(buffer_low_x) + getStd(buffer_low_y) + getStd(buffer_low_z)) > 65000 ) _attack = 1;
