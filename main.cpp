@@ -139,13 +139,13 @@ public:
 
     void printStd(){
         // pc.printf("HIGH: %10f %10f %10f\n", getStd(buffer_high_x), getStd(buffer_high_y), getStd(buffer_high_z));
-        // pc.printf("HIGH: %10f %10f %10f    LOW: %10f %10f %10f  JUMP: %10f %10f %10f \n", getStd(buffer_high_x), getStd(buffer_high_y), getStd(buffer_high_z), 
-        // getStd(buffer_low_x), getStd(buffer_low_y), getStd(buffer_low_z), getStd(buffer_stm_x), getStd(buffer_stm_y), getStd(buffer_stm_z));
+         pc.printf("HIGH: %10f %10f %10f    LOW: %10f %10f %10f  JUMP: %10f %10f %10f \n", getStd(buffer_high_x), getStd(buffer_high_y), getStd(buffer_high_z), 
+         getStd(buffer_low_x), getStd(buffer_low_y), getStd(buffer_low_z), getStd(buffer_stm_x), getStd(buffer_stm_y), getStd(buffer_stm_z));
         // pc.printf("Gyro: %10f %10f %10f\n", (pGyroDataXYZ[0]) * SCALE_MULTIPLIER, (pGyroDataXYZ[1]) * SCALE_MULTIPLIER, (pGyroDataXYZ[2]) * SCALE_MULTIPLIER);
         // pc.printf("Angle: %10f %10f %10f  Gyro: %10f %10f %10f\n", angle[0], angle[1], angle[2], 
         // (pGyroDataXYZ[0]) * SCALE_MULTIPLIER, (pGyroDataXYZ[1]) * SCALE_MULTIPLIER, (pGyroDataXYZ[2]) * SCALE_MULTIPLIER);
-        pc.printf("JUMP: %10f %10f %10f \n", getStd(buffer_stm_x), getStd(buffer_stm_y), getStd(buffer_stm_z));
-
+        // pc.printf("HIGH: %10f %10f %10f   JUMP: %10f %10f %10f \n",getStd(buffer_high_x), getStd(buffer_high_y), getStd(buffer_high_z),getStd(buffer_stm_x), getStd(buffer_stm_y), getStd(buffer_stm_z));
+        // pc.printf("erferfwerwferwfe");
         // pc.printf("HIGH: %10f  LOW: %10f  ACC: %10f\n", getStd(buffer_high), getStd(buffer_low), getStd(buffer_stm));
     }
     
@@ -192,6 +192,14 @@ private:
         return sqrt(std / BUFFER_SIZE);
     }
 
+    float getAvg(int* buffer){
+        float sum = 0;
+        for (int i = 0; i < BUFFER_SIZE; i++){
+            sum += buffer[i];
+        }
+        return sum / BUFFER_SIZE;
+    }
+
     void update() {
         accelerometer_high.getOutput(readings_high);
         accelerometer_low.getOutput(readings_low);
@@ -220,12 +228,9 @@ private:
 
         for (int i = 0; i < 3; i++){
             // save readings into buffers
-            buffer_high_x[buffer_p] = (float)readings_high[i];
-            buffer_low_x[buffer_p] = (float)readings_low[i];
-            buffer_stm_x[buffer_p] = (float)pDataXYZ[i];
 
             // integrate angle
-            if (abs(pGyroDataXYZ[i]) * SCALE_MULTIPLIER > 30){
+            if (abs(pGyroDataXYZ[i]) * SCALE_MULTIPLIER > 50){
                 angle[i] += (pGyroDataXYZ[i] + pGyroDataXYZ_prev[i]) / 2 * TIMESTEP * SCALE_MULTIPLIER;
             }
 
