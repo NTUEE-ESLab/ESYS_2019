@@ -1,5 +1,6 @@
 from bluepy.btle import Peripheral, UUID
 from bluepy.btle import Scanner, DefaultDelegate
+import time
 class ScanDelegate(DefaultDelegate):
     def __init__(self):
         DefaultDelegate.__init__(self)
@@ -17,11 +18,12 @@ for dev in devices:
         continue
     print ("%d: Device %s (%s), RSSI=%d dB" % (n, dev.addr, dev.addrType, dev.rssi))
     print ("Complete Local Name: %s"%(dev.getValueText(9)))
-    
+    if dev.getValueText(9) == 'MySensor':
+        number = n
     n += 1
     #for (adtype, desc, value) in dev.getScanData():
     #    print (" %s = %s" % (adtype, desc, value))
-number = int(input('Enter your device number: '))
+#number = int(input('Enter your device number: '))
 print('Device', number)
 print(devices[number].addr)
 print ("Connecting...")
@@ -38,6 +40,7 @@ try:
     if (ch.supportsRead()):
         from pynput.keyboard import Key, Controller
         keyboard = Controller()
+        prev = time.time()
         while (True):
             #TODO: read STM32 input and output keymapping
             '''
@@ -66,10 +69,12 @@ try:
                 a[2]: _jump
                 a[3]: _attack
             '''
-
+            if time.time() - prev > 1.0:
+                keyboard.release(Key.space)
+                                
             a = ch.read()
             print(a)
-            if a[0] == 1:
+            if a[0] == 1 or a[2] == 1:
                 if a[1] == 0:
                     keyboard.release(Key.right)
                     keyboard.press(Key.left)
@@ -84,17 +89,15 @@ try:
                 keyboard.release(Key.right)
 
             if a[2] == 1:
-                keyboard.press(Key.space)
-                keyboard.release(Key.space)
+                if time.time() - prev > 0.5:
+                    prev = time.time()
+                    keyboard.press(Key.space)
 
             if a[3] == 1:
                 keyboard.press(Key.ctrl)
                 keyboard.release(Key.ctrl)
 
 
-            if a[2] == 1:
-                keyboard.press("a")
-                keyboard.release("a")
     else:
         print (ch, "does not supports read")
 finally:
