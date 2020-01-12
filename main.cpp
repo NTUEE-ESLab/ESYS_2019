@@ -235,17 +235,14 @@ private:
         buffer_stm_z[buffer_p] = (float)pDataXYZ[2];
 
         wait(TIMESTEP);
-
         for (int i = 0; i < 3; i++){
-            // save readings into buffers
-
-            // integrate angle
+            // Riemann sum
             if (abs(pGyroDataXYZ[i]) * SCALE_MULTIPLIER > 50){
                 angle[i] += (pGyroDataXYZ[i] + pGyroDataXYZ_prev[i]) / 2 * TIMESTEP * SCALE_MULTIPLIER;
             }
-
             pGyroDataXYZ_prev[i] = pGyroDataXYZ[i];
         }
+
         buffer_high[buffer_p] = sqrt(pow((float)readings_high[0],2)+pow((float)readings_high[1],2)+pow((float)readings_high[2],2));
         buffer_stm[buffer_p] = sqrt(pow((float)pDataXYZ[0],2)+pow((float)pDataXYZ[1],2)+pow((float)pDataXYZ[2],2));
 
