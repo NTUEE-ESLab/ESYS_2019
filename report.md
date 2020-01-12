@@ -1,7 +1,7 @@
 # 2019-STM Fit
 
 ## Motivation
-
+The motivation comes from a popular game, Ring Fit Adventure. The game is played with Nintendo Switch and "ring fit", a flexible rubber ring that can detect the motion of the player. It's called ring fit because it helps you do workout while playing games, making fitness  more interesting. STM32 itself is equipped with accelerometer and gyroscope, and we can connect it with more ADXL345 to capture the player's motion more accurately. Therefore, we want to build an "STMFit" with STM32 and several cheap modules. We hope that everyone can have fun in building such motion sensing device with low cost and have fun in exercising.
 ## Implementation
 ![](https://i.imgur.com/86JFX5c.png)
 ### STM32
